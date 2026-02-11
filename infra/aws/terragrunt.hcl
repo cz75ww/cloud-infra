@@ -19,7 +19,18 @@ remote_state {
     region         = local.aws_region
     encrypt        = true
     dynamodb_table = "terraform-locks"
+
+    s3_bucket_tags = {
+      Owner = "terragrunt"
+      Name  = "Terraform State Storage"
+    }
+    
+    dynamodb_table_tags = {
+      Owner = "terragrunt"
+      Name  = "Terraform Lock Table"
+    }
   }
+  
 }
 
 # Generate provider configuration

@@ -33,11 +33,11 @@ inputs = {
   
   wait_for_jobs = false
 
-   addons = {
-    coredns = {
-      addon_version = "v1.11.3-eksbuild.1" # Adjust version based on your EKS 1.31
-    }
-  }
+  #  addons = {
+  #   coredns = {
+  #     addon_version = "v1.11.3-eksbuild.1" # Adjust version based on your EKS 1.31
+  #   }
+  # }
   
   helm_values = {
     eni = { enabled = true }
@@ -46,7 +46,9 @@ inputs = {
     routingMode                = "native"
     kubeProxyReplacement       = "true"
     
-    k8sServiceHost = trimprefix(dependency.eks.outputs.cluster_endpoint, "https://")
+    #k8sServiceHost = trimprefix(dependency.eks.outputs.cluster_endpoint, "https://")
+    k8sServiceHost = try(trimprefix(dependency.eks.outputs.cluster_endpoint, "https://"), "pending")
+    
     k8sServicePort = 443
     
     hubble = {

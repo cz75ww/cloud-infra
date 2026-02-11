@@ -18,6 +18,7 @@ dependency "eks" {
     oidc_provider_arn     = "arn:aws:iam::123456789012:oidc-provider/mock"
     oidc_provider         = "oidc.eks.us-east-1.amazonaws.com/id/MOCK"
   }
+  mock_outputs_allowed_terraform_commands = ["init", "validate", "plan"]
 }
 
 dependency "vpc" {

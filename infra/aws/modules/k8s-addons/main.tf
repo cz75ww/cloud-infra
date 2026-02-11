@@ -12,19 +12,6 @@ resource "helm_release" "this" {
   values = [yamlencode(var.helm_values)]
 }
 
-# resource "aws_eks_addon" "this" {
-#   for_each = var.addons
-
-#   cluster_name    = var.eks_name
-#   addon_name      = each.key
-#   addon_version   = each.value.addon_version
-
-#   resolve_conflicts_on_create = "OVERWRITE"
-#   resolve_conflicts_on_update = "OVERWRITE"
-  
-#   depends_on = [helm_release.this] 
-# }
-
 resource "aws_eks_addon" "this" {
   for_each = var.addons
 

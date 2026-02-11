@@ -1,26 +1,47 @@
+include "root" {
+  path = find_in_parent_folders()
+}
+
+terraform {
+  source = "../../../../modules/k8s-addons"
+}
+
 dependency "eks" {
   config_path = "../../eks"
+  
+  mock_outputs = {
+    cluster_name = "mock-cluster"
+  }
+  mock_outputs_allowed_terraform_commands = ["init", "validate", "plan", "destroy"]
 }
 
 dependency "cilium" {
   config_path = "../../cilium"
+  
+  mock_outputs = {
+    dummy = "dummy"
+  }
+  skip_outputs = true
+  mock_outputs_allowed_terraform_commands = ["init", "validate", "plan", "destroy"]
 }
 
 dependency "nodes" {
   config_path = "../../group-nodes"
+  
+  mock_outputs = {
+    dummy = "dummy"
+  }
+  skip_outputs = true
+  mock_outputs_allowed_terraform_commands = ["init", "validate", "plan", "destroy"]
 }
 
-# This forces Terragrunt to ensure the Cluster, the Network and the EC2s exist before trying to put CoreDNS on them.
 inputs = {
-  cluster_name = dependency.eks.outputs.cluster_name
+  eks_name = dependency.eks.outputs.cluster_name
+  release_name = "eks-addons-placeholder"
   
-  # We leave helm_release empty here because Cilium is handled by the 'cilium' dependency folder.
-  release_name = "eks-addons-placeholder" 
-
   addons = {
     coredns = {
-      # Tip: Run 'aws eks describe-addon-versions' to get the right string
-      addon_version = "v1.11.3-eksbuild.1" 
+      addon_version = "v1.11.3-eksbuild.2"
     }
   }
 }

@@ -2,49 +2,141 @@ version: "3"
 
 vars:
   ENV: '{{.ENV | default "dev"}}'
-  DEV_PATH: "aws/envs/{{.ENV}}"
+  BASE: "aws/envs/{{.ENV}}"
 
 tasks:
   default:
     silent: true
     cmds:
       - task --list
-
-  plan-all:
-    desc: "Preview changes for the entire stack"
-    cmds:
-      - terragrunt --working-dir {{.DEV_PATH}} run --all --non-interactive -- plan
+      - echo ""
+      - echo "Order vpc > eks > cilium > group-nodes > platform/eks-addons > platform/argo-cd > karpenter"
 
   up:
-    desc: "Deploy Full Stack: VPC → EKS → Cilium → Nodes → Platform → Karpenter"
+    desc: "Deploy Full Stack (Correct Order)"
     cmds:
-      # Note the flag is BEFORE the 'run' command
-      - terragrunt --working-dir {{.DEV_PATH}} run --all --non-interactive -- apply -auto-approve
+      - echo "Starting deployment..."
+      - echo ""
+
+      - echo "[1/7] Deploying VPC..."
+      - task: apply
+        vars: { COMPONENT: "vpc" }
+      - echo "VPC deployed"
+      - echo ""
+
+      - echo "[2/7] Deploying EKS cluster..."
+      - task: apply
+        vars: { COMPONENT: "eks" }
+      - echo "EKS deployed"
+      - echo ""
+
+      - echo "[3/7] Deploying Cilium CNI..."
+      - task: apply
+        vars: { COMPONENT: "cilium" }
+      - echo "Cilium deployed"
+      - echo ""
+
+      - echo "[4/7] Deploying managed nodes..."
+      - task: apply
+        vars: { COMPONENT: "group-nodes" }
+      - echo "Nodes deployed"
+      - echo ""
+
+      - echo "[5/7] Deploying EKS addons (CoreDNS)..."
+      - task: apply
+        vars: { COMPONENT: "platform/eks-addons" }
+      - echo "EKS addons deployed"
+      - echo ""
+
+      - echo "[6/7] Deploying ArgoCD..."
+      - task: apply
+        vars: { COMPONENT: "platform/argo-cd" }
+      - echo "ArgoCD deployed"
+      - echo ""
+
+      - echo "[7/7] Deploying Karpenter..."
+      - task: apply
+        vars: { COMPONENT: "karpenter" }
+      - echo "Karpenter deployed"
+      - echo ""
+
       - task: kubeconfig
+      - echo ""
+      - echo "Deployment complete!"
 
   down:
-    desc: "Destroy Full Stack"
-    prompt: "This will destroy the ENTIRE {{.ENV}} environment. Continue?"
+    desc: "Destroy Everything (Reverse Order)"
+    prompt: "Destroy {{.ENV}}?"
     cmds:
-      - terragrunt --working-dir {{.DEV_PATH}} run --all --non-interactive -- destroy -auto-approve
+      - echo "Starting destruction..."
+      - echo ""
+      - echo "Destroy complete!"
 
-  # --- Single Component Tasks ---
-  plan:
-    desc: "Plan a single folder (Usage: task plan -- vpc)"
-    dir: "{{.DEV_PATH}}/{{.CLI_ARGS}}"
-    cmds:
-      - terragrunt plan
+      - echo "[1/7] Destroying Karpenter..."
+      - task: destroy
+        vars: { COMPONENT: "karpenter" }
+      - echo ""
+      - echo "Destroy complete!"
 
-  component:
-    desc: "Apply a single folder"
-    dir: "{{.DEV_PATH}}/{{.CLI_ARGS}}"
+      - echo "[2/7] Destroying ArgoCD..."
+      - task: destroy
+        vars: { COMPONENT: "platform/argo-cd" }
+      - echo ""
+      - echo "Destroy complete!"
+
+      - echo "[3/7] Destroying EKS addons..."
+      - task: destroy
+        vars: { COMPONENT: "platform/eks-addons" }
+      - echo ""
+      - echo "Destroy complete!"
+
+      - echo "[4/7] Destroying nodes..."
+      - task: destroy
+        vars: { COMPONENT: "group-nodes" }
+      - echo ""
+      - echo "Destroy complete!"
+
+      - echo "[5/7] Destroying Cilium..."
+      - task: destroy
+        vars: { COMPONENT: "cilium" }
+      - echo ""
+      - echo "Destroy complete!"
+
+      - echo "[6/7] Destroying EKS..."
+      - task: destroy
+        vars: { COMPONENT: "eks" }
+      - echo ""
+      - echo "Destroy complete!"
+
+      - echo "[7/7] Destroying VPC..."
+      - task: destroy
+        vars: { COMPONENT: "vpc" }
+      - echo ""
+      - echo "Destroy complete!"
+
+  apply:
+    desc: "Apply component (task apply COMPONENT=vpc)"
+    dir: "{{.BASE}}/{{.COMPONENT}}"
     cmds:
       - terragrunt apply -auto-approve
 
-  kubeconfig:
-    desc: "Sync kubectl with EKS"
-    vars:
-      CLUSTER_NAME:
-        sh: terragrunt output -json -working-dir {{.DEV_PATH}}/eks | jq -r '.cluster_name.value'
+  destroy:
+    desc: "Destroy component"
+    dir: "{{.BASE}}/{{.COMPONENT}}"
     cmds:
-      - aws eks update-kubeconfig --name {{.CLUSTER_NAME}}
+      - terragrunt destroy -auto-approve
+
+  plan:
+    desc: "Plan component"
+    dir: "{{.BASE}}/{{.COMPONENT}}"
+    cmds:
+      - terragrunt plan
+
+  kubeconfig:
+    desc: "Update kubeconfig"
+    dir: "{{.BASE}}/eks"
+    vars:
+      CLUSTER:
+      sh: "terragrunt output -raw cluster_name"
+    cmds:
+      - aws eks update-kubeconfig --name {{.CLUSTER}}
