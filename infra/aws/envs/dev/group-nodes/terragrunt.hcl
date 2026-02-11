@@ -45,6 +45,14 @@ inputs = {
         min_size     = 1
       }
       
+      taints = [
+        {
+          key    = "node.cilium.io/agent-not-ready"
+          value  = "true"
+          effect = "NO_EXECUTE" # Recommended for EKS 1.31+
+        }
+      ]
+      
       labels = {
         role = "general"
       }

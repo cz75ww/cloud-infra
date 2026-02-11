@@ -28,7 +28,7 @@ inputs = {
   chart_version = "1.16.5"
   namespace     = "kube-system"
   
-  wait          = true
+  wait          = false
   timeout       = 600 
   
   wait_for_jobs = false
@@ -46,7 +46,6 @@ inputs = {
     routingMode                = "native"
     kubeProxyReplacement       = "true"
     
-    # Excellent use of trimprefix here
     k8sServiceHost = trimprefix(dependency.eks.outputs.cluster_endpoint, "https://")
     k8sServicePort = 443
     
