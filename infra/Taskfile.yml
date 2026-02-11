@@ -1,0 +1,50 @@
+version: "3"
+
+vars:
+  ENV: '{{.ENV | default "dev"}}'
+  DEV_PATH: "aws/envs/{{.ENV}}"
+
+tasks:
+  default:
+    silent: true
+    cmds:
+      - task --list
+
+  plan-all:
+    desc: "Preview changes for the entire stack"
+    cmds:
+      - terragrunt --working-dir {{.DEV_PATH}} run --all --non-interactive -- plan
+
+  up:
+    desc: "Deploy Full Stack: VPC → EKS → Cilium → Nodes → Platform → Karpenter"
+    cmds:
+      # Note the flag is BEFORE the 'run' command
+      - terragrunt --working-dir {{.DEV_PATH}} run --all --non-interactive -- apply -auto-approve
+      - task: kubeconfig
+
+  down:
+    desc: "Destroy Full Stack"
+    prompt: "This will destroy the ENTIRE {{.ENV}} environment. Continue?"
+    cmds:
+      - terragrunt --working-dir {{.DEV_PATH}} run --all --non-interactive -- destroy -auto-approve
+
+  # --- Single Component Tasks ---
+  plan:
+    desc: "Plan a single folder (Usage: task plan -- vpc)"
+    dir: "{{.DEV_PATH}}/{{.CLI_ARGS}}"
+    cmds:
+      - terragrunt plan
+
+  component:
+    desc: "Apply a single folder"
+    dir: "{{.DEV_PATH}}/{{.CLI_ARGS}}"
+    cmds:
+      - terragrunt apply -auto-approve
+
+  kubeconfig:
+    desc: "Sync kubectl with EKS"
+    vars:
+      CLUSTER_NAME:
+        sh: terragrunt output -json -working-dir {{.DEV_PATH}}/eks | jq -r '.cluster_name.value'
+    cmds:
+      - aws eks update-kubeconfig --name {{.CLUSTER_NAME}}

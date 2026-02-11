@@ -1,0 +1,30 @@
+# --- Terragrunt & Terraform ---
+# The most important one: ignores the huge cache folders Terragrunt creates
+**/.terragrunt-cache/
+.terragrunt-stack/
+
+# The .terraform directory where providers and modules are downloaded
+**/.terraform/*
+
+# Ignore all state files (they often contain secrets like passwords)
+*.tfstate
+*.tfstate.*
+
+# Ignore lock files that are transient
+.terraform.tfstate.lock.info
+
+# --- Variables & Secrets ---
+# Ignore any files containing sensitive variables
+*.tfvars
+*.tfvars.json
+
+# If you use .env files for local secrets
+.env
+.envrc
+
+# --- System & IDE ---
+.DS_Store
+.idea/
+.vscode/
+*.log
+crash.log
