@@ -87,8 +87,8 @@ tasks:
   kubeconfig:
     desc: "Update kubeconfig"
     dir: "{{.BASE}}/eks"
-    vars:
-      CLUSTER:
-        sh: "terragrunt output -raw cluster_name"
+    # vars:
+    #   CLUSTER:
+    #     sh: "terragrunt output -raw cluster_name"
     cmds:
-      - aws eks update-kubeconfig --name {{.CLUSTER}}
+      - aws eks update-kubeconfig --name $(aws eks list-clusters --query 'clusters[]' --output text) --region $(aws configure get region)
