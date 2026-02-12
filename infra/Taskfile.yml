@@ -4,6 +4,9 @@ vars:
   ENV: '{{.ENV | default "dev"}}'
   BASE: "aws/envs/{{.ENV}}"
 
+  # Define deployment order
+  COMPONENTS: "vpc eks cilium group-nodes platform/eks-addons platform/argo-cd karpenter"
+
 tasks:
   default:
     silent: true
@@ -13,53 +16,15 @@ tasks:
       - echo "Order vpc > eks > cilium > group-nodes > platform/eks-addons > platform/argo-cd > karpenter"
 
   up:
-    desc: "Deploy Full Stack (Correct Order)"
+    desc: "Deploy Full Stack"
     cmds:
       - echo "Starting deployment..."
       - echo ""
-
-      - echo "[1/7] Deploying VPC..."
-      - task: apply
-        vars: { COMPONENT: "vpc" }
-      - echo "VPC deployed"
-      - echo ""
-
-      - echo "[2/7] Deploying EKS cluster..."
-      - task: apply
-        vars: { COMPONENT: "eks" }
-      - echo "EKS deployed"
-      - echo ""
-
-      - echo "[3/7] Deploying Cilium CNI..."
-      - task: apply
-        vars: { COMPONENT: "cilium" }
-      - echo "Cilium deployed"
-      - echo ""
-
-      - echo "[4/7] Deploying managed nodes..."
-      - task: apply
-        vars: { COMPONENT: "group-nodes" }
-      - echo "Nodes deployed"
-      - echo ""
-
-      - echo "[5/7] Deploying EKS addons (CoreDNS)..."
-      - task: apply
-        vars: { COMPONENT: "platform/eks-addons" }
-      - echo "EKS addons deployed"
-      - echo ""
-
-      - echo "[6/7] Deploying ArgoCD..."
-      - task: apply
-        vars: { COMPONENT: "platform/argo-cd" }
-      - echo "ArgoCD deployed"
-      - echo ""
-
-      - echo "[7/7] Deploying Karpenter..."
-      - task: apply
-        vars: { COMPONENT: "karpenter" }
-      - echo "Karpenter deployed"
-      - echo ""
-
+      - for: { var: COMPONENTS, split: " " }
+        task: deploy-component
+        vars:
+          COMPONENT: "{{.ITEM}}"
+          INDEX: "{{.FOR_INDEX}}"
       - task: kubeconfig
       - echo ""
       - echo "Deployment complete!"
@@ -67,52 +32,39 @@ tasks:
   down:
     desc: "Destroy Everything (Reverse Order)"
     prompt: "Destroy {{.ENV}}?"
+    vars:
+      # Reverse the components list
+      COMPONENTS_REV: "karpenter platform/argo-cd platform/eks-addons group-nodes cilium eks vpc"
     cmds:
       - echo "Starting destruction..."
       - echo ""
-      - echo "Destroy complete!"
-
-      - echo "[1/7] Destroying Karpenter..."
-      - task: destroy
-        vars: { COMPONENT: "karpenter" }
+      - for: { var: COMPONENTS_REV, split: " " }
+        task: destroy-component
+        vars:
+          COMPONENT: "{{.ITEM}}"
+          INDEX: "{{.FOR_INDEX}}"
       - echo ""
       - echo "Destroy complete!"
 
-      - echo "[2/7] Destroying ArgoCD..."
-      - task: destroy
-        vars: { COMPONENT: "platform/argo-cd" }
+  # Internal task for deployment
+  deploy-component:
+    internal: true
+    cmds:
+      - echo "[{{.INDEX}}/7] Deploying {{.COMPONENT}}..."
+      - task: apply
+        vars: { COMPONENT: "{{.COMPONENT}}" }
+      - echo "{{.COMPONENT}} deployed"
       - echo ""
-      - echo "Destroy complete!"
 
-      - echo "[3/7] Destroying EKS addons..."
+  # Internal task for destruction
+  destroy-component:
+    internal: true
+    cmds:
+      - echo "[{{.INDEX}}/7] Destroying {{.COMPONENT}}..."
       - task: destroy
-        vars: { COMPONENT: "platform/eks-addons" }
+        vars: { COMPONENT: "{{.COMPONENT}}" }
+      - echo "{{.COMPONENT}} destroyed"
       - echo ""
-      - echo "Destroy complete!"
-
-      - echo "[4/7] Destroying nodes..."
-      - task: destroy
-        vars: { COMPONENT: "group-nodes" }
-      - echo ""
-      - echo "Destroy complete!"
-
-      - echo "[5/7] Destroying Cilium..."
-      - task: destroy
-        vars: { COMPONENT: "cilium" }
-      - echo ""
-      - echo "Destroy complete!"
-
-      - echo "[6/7] Destroying EKS..."
-      - task: destroy
-        vars: { COMPONENT: "eks" }
-      - echo ""
-      - echo "Destroy complete!"
-
-      - echo "[7/7] Destroying VPC..."
-      - task: destroy
-        vars: { COMPONENT: "vpc" }
-      - echo ""
-      - echo "Destroy complete!"
 
   apply:
     desc: "Apply component (task apply COMPONENT=vpc)"
@@ -137,6 +89,6 @@ tasks:
     dir: "{{.BASE}}/eks"
     vars:
       CLUSTER:
-      sh: "terragrunt output -raw cluster_name"
+        sh: "terragrunt output -raw cluster_name"
     cmds:
       - aws eks update-kubeconfig --name {{.CLUSTER}}
