@@ -1,30 +1,18 @@
-# Karpenter Controller IAM Role
-data "aws_iam_policy_document" "karpenter_controller_assume_role_policy" {
-  statement {
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-    effect  = "Allow"
-    
-    condition {
-      test     = "StringEquals"
-      variable = "${replace(var.oidc_provider, "https://", "")}:sub"
-      values   = ["system:serviceaccount:${var.karpenter_namespace}:karpenter"]
-    }
-    
-    principals {
-      identifiers = [var.oidc_provider_arn]
-      type        = "Federated"
-    }
-  }
-}
-
 resource "aws_iam_role" "karpenter_controller" {
-  name               = "${var.cluster_name}-karpenter-controller"
-  assume_role_policy = data.aws_iam_policy_document.karpenter_controller_assume_role_policy.json
-  
+  name = "${var.cluster_name}-karpenter-controller"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "pods.eks.amazonaws.com" }
+      Action    = ["sts:AssumeRole", "sts:TagSession"]
+    }]
+  })
+
   tags = var.tags
 }
 
-# Karpenter Controller Policy
 data "aws_iam_policy_document" "karpenter_controller" {
   statement {
     effect = "Allow"
@@ -49,23 +37,21 @@ data "aws_iam_policy_document" "karpenter_controller" {
     ]
     resources = ["*"]
   }
-  
+
   statement {
-    effect = "Allow"
-    actions = [
-      "iam:PassRole"
-    ]
+    effect    = "Allow"
+    actions   = ["iam:PassRole"]
     resources = [aws_iam_role.karpenter_node.arn]
   }
-  
+
   statement {
-    effect = "Allow"
-    actions = [
-      "eks:DescribeCluster"
+    effect  = "Allow"
+    actions = ["eks:DescribeCluster"]
+    resources = [
+      "arn:aws:eks:${var.region}:${data.aws_caller_identity.current.account_id}:cluster/${var.cluster_name}"
     ]
-    resources = ["arn:aws:eks:${var.region}:${data.aws_caller_identity.current.account_id}:cluster/${var.cluster_name}"]
   }
-  
+
   statement {
     effect = "Allow"
     actions = [
@@ -79,7 +65,7 @@ data "aws_iam_policy_document" "karpenter_controller" {
     ]
     resources = ["*"]
   }
-  
+
   statement {
     effect = "Allow"
     actions = [
@@ -95,8 +81,7 @@ data "aws_iam_policy_document" "karpenter_controller" {
 resource "aws_iam_policy" "karpenter_controller" {
   name   = "${var.cluster_name}-KarpenterController"
   policy = data.aws_iam_policy_document.karpenter_controller.json
-  
-  tags = var.tags
+  tags   = var.tags
 }
 
 resource "aws_iam_role_policy_attachment" "karpenter_controller_attach" {
@@ -104,12 +89,17 @@ resource "aws_iam_role_policy_attachment" "karpenter_controller_attach" {
   policy_arn = aws_iam_policy.karpenter_controller.arn
 }
 
-# Karpenter Node IAM Role
+resource "aws_eks_pod_identity_association" "karpenter" {
+  cluster_name    = var.cluster_name
+  namespace       = var.karpenter_namespace
+  service_account = "karpenter"
+  role_arn        = aws_iam_role.karpenter_controller.arn
+}
+
 data "aws_iam_policy_document" "karpenter_node_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
     effect  = "Allow"
-    
     principals {
       type        = "Service"
       identifiers = ["ec2.amazonaws.com"]
@@ -120,11 +110,9 @@ data "aws_iam_policy_document" "karpenter_node_assume_role" {
 resource "aws_iam_role" "karpenter_node" {
   name               = "${var.cluster_name}-karpenter-node"
   assume_role_policy = data.aws_iam_policy_document.karpenter_node_assume_role.json
-  
-  tags = var.tags
+  tags               = var.tags
 }
 
-# Attach required policies for nodes
 resource "aws_iam_role_policy_attachment" "karpenter_node_eks_worker" {
   role       = aws_iam_role.karpenter_node.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
@@ -145,10 +133,8 @@ resource "aws_iam_role_policy_attachment" "karpenter_node_ssm" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
-# Instance Profile for Karpenter nodes
 resource "aws_iam_instance_profile" "karpenter" {
   name = "${var.cluster_name}-karpenter-node"
   role = aws_iam_role.karpenter_node.name
-  
   tags = var.tags
 }

@@ -8,16 +8,6 @@ variable "cluster_endpoint" {
   type        = string
 }
 
-variable "oidc_provider_arn" {
-  description = "OIDC provider ARN"
-  type        = string
-}
-
-variable "oidc_provider" {
-  description = "OIDC provider URL"
-  type        = string
-}
-
 variable "region" {
   description = "AWS region"
   type        = string
