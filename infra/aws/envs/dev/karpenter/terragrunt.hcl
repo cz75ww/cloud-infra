@@ -42,8 +42,6 @@ locals {
 inputs = {
   cluster_name        = "dev-demo"
   cluster_endpoint    = dependency.eks.outputs.cluster_endpoint
-  oidc_provider_arn   = dependency.eks.outputs.oidc_provider_arn
-  oidc_provider       = dependency.eks.outputs.oidc_provider
   region              = local.region_vars.locals.aws_region
   karpenter_namespace = "karpenter"
   karpenter_version   = "1.8.6"

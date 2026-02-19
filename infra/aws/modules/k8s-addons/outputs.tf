@@ -26,3 +26,4 @@ output "values" {
   value     = length(helm_release.this) > 0 ? helm_release.this[0].values : null
   sensitive = true
 }
+

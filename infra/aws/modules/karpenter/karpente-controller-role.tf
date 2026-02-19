@@ -89,13 +89,6 @@ resource "aws_iam_role_policy_attachment" "karpenter_controller_attach" {
   policy_arn = aws_iam_policy.karpenter_controller.arn
 }
 
-resource "aws_eks_pod_identity_association" "karpenter" {
-  cluster_name    = var.cluster_name
-  namespace       = var.karpenter_namespace
-  service_account = "karpenter"
-  role_arn        = aws_iam_role.karpenter_controller.arn
-}
-
 data "aws_iam_policy_document" "karpenter_node_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
