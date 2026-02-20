@@ -7,7 +7,7 @@ include "kubernetes_addons" {
 }
 
 terraform {
-  source = "../../../../modules/k8s-addons"
+  source = "../../../../modules/argocd"
 }
 
 dependency "eks" {

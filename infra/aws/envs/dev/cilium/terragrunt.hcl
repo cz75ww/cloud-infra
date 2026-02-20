@@ -7,15 +7,16 @@ include "kubernetes_addons" {
 }
 
 terraform {
-  source = "../../../modules/k8s-addons"
+  source = "../../../modules/cilium"
 }
 
 dependency "eks" {
   config_path = "../eks"
   
+  # Workarond - Mock values used during init/plan before EKS exists
   mock_outputs = {
-    cluster_name     = "mock-cluster"
-    cluster_endpoint = "https://mock.example.com"
+    cluster_name     = "mock-cluster"  # Fake cluster name
+    cluster_endpoint = "https://mock.example.com"  # Fake API endpoint
   }
   mock_outputs_allowed_terraform_commands = ["init", "validate", "plan", "destroy"]
 }
@@ -33,12 +34,7 @@ inputs = {
   
   wait_for_jobs = false
 
-  #  addons = {
-  #   coredns = {
-  #     addon_version = "v1.11.3-eksbuild.1" # Adjust version based on your EKS 1.31
-  #   }
-  # }
-  
+   
   helm_values = {
     eni = { enabled = true }
     ipam = { mode = "eni" }

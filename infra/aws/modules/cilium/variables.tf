@@ -29,3 +29,8 @@ variable "helm_values" {
   type        = any
   default     = {}
 }
+
+variable "eks_name" {
+  description = "EKS cluster name"
+  type        = string
+}
