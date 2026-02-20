@@ -1,4 +1,5 @@
-# IAM Role for EBS CSI Driver only for demonstration purposes
+# IAM Role for EBS CSI Driver only for test purposes - in production, you'd typically create a dedicated role per addon with least privilege policies
+resource "aws_iam_role" "ebs_csi" {
   name = "${var.eks_name}-ebs-csi-driver"
 
   assume_role_policy = jsonencode({
@@ -16,7 +17,7 @@ resource "aws_iam_role_policy_attachment" "ebs_csi" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
 }
 
-# IAM Role for Secrets Store CSI Driver - only for demonstration purposes
+# IAM Role for Secrets Store CSI Driver (for testing purposes - in production, you'd typically create a dedicated role per addon)
 
 resource "aws_iam_role" "secrets_store_test" {
   name = "${var.eks_name}-secrets-store-test"
