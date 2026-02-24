@@ -165,19 +165,15 @@ tasks:
     desc: "Apply component (task apply COMPONENT=vpc)"
     dir: "{{.BASE}}/{{.COMPONENT}}"
     cmds:
-      - terragrunt apply -auto-approve
+      - terragrunt validate
+      - terragrunt plan -out=tfplan
+      - terragrunt apply tfplan
 
   destroy:
     desc: "Destroy component"
     dir: "{{.BASE}}/{{.COMPONENT}}"
     cmds:
       - terragrunt destroy -auto-approve
-
-  plan:
-    desc: "Plan component"
-    dir: "{{.BASE}}/{{.COMPONENT}}"
-    cmds:
-      - terragrunt plan
 
   kubeconfig:
     desc: "Update kubeconfig"
