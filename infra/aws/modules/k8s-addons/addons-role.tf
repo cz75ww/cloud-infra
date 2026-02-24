@@ -19,8 +19,8 @@ resource "aws_iam_role_policy_attachment" "ebs_csi" {
 
 # IAM Role for Secrets Store CSI Driver (for testing purposes - in production, you'd typically create a dedicated role per addon)
 
-resource "aws_iam_role" "secrets_store_test" {
-  name = "${var.eks_name}-secrets-store-test"
+resource "aws_iam_role" "secrets_store" {
+  name = "${var.eks_name}-secrets-store"
 
   # Dual trust policy - supports both Pod Identity AND IRSA
   assume_role_policy = jsonencode({
@@ -48,14 +48,9 @@ resource "aws_iam_role" "secrets_store_test" {
   })
 }
 
-# Get OIDC provider (needed for IRSA)
-data "aws_iam_openid_connect_provider" "eks" {
-  url = data.aws_eks_cluster.this.identity[0].oidc[0].issuer
-}
-
 # Policy for reading secrets
-resource "aws_iam_role_policy" "secrets_store_test" {
-  role = aws_iam_role.secrets_store_test.name
+resource "aws_iam_role_policy" "secrets_store" {
+  role = aws_iam_role.secrets_store.name
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -67,5 +62,37 @@ resource "aws_iam_role_policy" "secrets_store_test" {
       ]
       Resource = "arn:aws:secretsmanager:*:*:secret:my-test-secret-*"
     }]
+  })
+}
+
+# Policy for reading external-dns
+
+
+resource "aws_iam_role" "externaldns_role" {
+  name               = "${var.eks_name}-externaldns-role"
+  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+}
+
+resource "aws_iam_role_policy" "external_dns" {
+  role = aws_iam_role.externaldns_role.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["route53:ChangeResourceRecordSets"]
+        Resource = "arn:aws:route53:::hostedzone/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "route53:ListHostedZones",
+          "route53:ListResourceRecordSets",
+          "route53:ListTagsForResource"
+        ]
+        Resource = "*"
+      }
+    ]
   })
 }
