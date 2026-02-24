@@ -52,5 +52,8 @@ inputs = {
     aws-secrets-store-csi-driver-provider = {
       addon_version = "v2.1.1-eksbuild.1"
     }
+    external-dns = {
+      addon_version = "v0.20.0-eksbuild.3"
+    }
   }
 }
