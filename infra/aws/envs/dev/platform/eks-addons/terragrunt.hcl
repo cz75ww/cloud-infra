@@ -41,13 +41,13 @@ inputs = {
   
   addons = {
     coredns = {
-      addon_version = "v1.11.3-eksbuild.2"
+      addon_version = "v1.11.4-eksbuild.28"
     }
     eks-pod-identity-agent = {
-      addon_version = "v1.3.4-eksbuild.1"
+      addon_version = "v1.3.10-eksbuild.2"
     }
     aws-ebs-csi-driver = {
-      addon_version = "v1.37.0-eksbuild.1"
+      addon_version = "v1.56.0-eksbuild.1"
     }
     aws-secrets-store-csi-driver-provider = {
       addon_version = "v2.1.1-eksbuild.1"
