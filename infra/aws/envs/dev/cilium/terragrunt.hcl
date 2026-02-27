@@ -26,7 +26,7 @@ inputs = {
   release_name  = "cilium"
   repository    = "https://helm.cilium.io"
   chart         = "cilium"
-  chart_version = "1.16.5"
+  chart_version = "1.17.1"
   namespace     = "kube-system"
   
   wait          = false
