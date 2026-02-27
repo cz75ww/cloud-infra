@@ -36,6 +36,7 @@ inputs = {
   
   node_groups = {
     general = {
+      eks_version    = "1.32"
       capacity_type  = "ON_DEMAND"
       instance_types = ["t3a.xlarge"]
       
