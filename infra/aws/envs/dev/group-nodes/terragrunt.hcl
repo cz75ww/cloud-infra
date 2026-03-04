@@ -45,7 +45,7 @@ inputs = {
         max_size     = 10
         min_size     = 1
       }
-      
+
       taints = [
         {
           key    = "node.cilium.io/agent-not-ready"
