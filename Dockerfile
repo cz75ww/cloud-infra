@@ -134,6 +134,15 @@ RUN set -e; \
     install -m 0755 /tmp/k9s /usr/local/bin/k9s; \
     rm -f /tmp/k9s
 
+# Install ArgoCD CLI
+RUN set -e; \
+    ARGOCD_VERSION=$(curl -s https://api.github.com/repos/argoproj/argo-cd/releases/latest | jq -r '.tag_name'); \
+    curl -sLO "https://github.com/argoproj/argo-cd/releases/download/${ARGOCD_VERSION}/argocd-linux-amd64"; \
+    curl -sLO "https://github.com/argoproj/argo-cd/releases/download/${ARGOCD_VERSION}/cli_checksums.txt"; \
+    grep "argocd-linux-amd64$" cli_checksums.txt | sha256sum -c -; \
+    install -m 0755 argocd-linux-amd64 /usr/local/bin/argocd; \
+    rm -f argocd-linux-amd64 cli_checksums.txt
+
 # Install Ansible with pinned version
 RUN pip3 install --break-system-packages --no-cache-dir ansible==${ANSIBLE_VERSION}
 

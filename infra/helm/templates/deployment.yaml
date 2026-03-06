@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: "{{ .Values.appName }}"
+  name: "{{ .Values.env }}-{{ .Values.appName }}"
+spec:
+  replicas: {{ .Values.replicasCount }}
+  selector:
+    matchLabels:
+      app: "{{ .Values.appName }}"
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: "{{ .Values.appName }}"
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - "{{ .Values.appName }}"
+            topologyKey: "kubernetes.io/hostname"
+      volumes:
+      - name: "{{ .Values.appName }}-{{ .Values.volumeName }}"
+        persistentVolumeClaim:
+          claimName: "{{ .Values.persistentVolumeClaim }}-{{ .Values.appName }}"
+      containers:
+      - image: "{{ .Values.imageRelease }}"
+        name: "{{ .Values.appName }}-container"
+        resources: {}
+        ports:
+        - containerPort: {{ .Values.containerPortNumber }}
+        volumeMounts:
+        - mountPath: "{{ .Values.mountPoint }}"
+          name: "{{ .Values.appName }}-{{ .Values.volumeName }}"
