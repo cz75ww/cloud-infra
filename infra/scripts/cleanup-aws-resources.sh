@@ -51,4 +51,4 @@ else
   echo "==> No ingresses found, skipping..."
 fi
 
-echo "==> Cleanup done!
+echo "==> Cleanup done!"
