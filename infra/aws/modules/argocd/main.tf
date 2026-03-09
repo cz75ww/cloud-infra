@@ -10,3 +10,32 @@ resource "aws_eks_addon" "this" {
   resolve_conflicts_on_update = "OVERWRITE"
 
 }
+
+resource "kubectl_manifest" "argocd_app_of_apps" {
+  yaml_body = <<-YAML
+    apiVersion: argoproj.io/v1alpha1
+    kind: Application
+    metadata:
+      name: linkding
+      namespace: argocd
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/cz75ww/homelab-eks-apps-linkding.git
+        targetRevision: HEAD
+        path: .
+        helm:
+          valueFiles:
+            - envs/dev/values.yaml
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: linkding-ns
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+        automated:
+          selfHeal: true
+          prune: true
+  YAML
+}
+
