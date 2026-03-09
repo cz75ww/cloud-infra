@@ -32,7 +32,7 @@ inputs = {
   chart_version = "7.7.11"
   namespace     = "argocd"
   
-  wait    = false
+  wait    = true
   timeout = 600
   
   helm_values = {
