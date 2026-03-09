@@ -38,9 +38,10 @@ inputs = {
   helm_values = {
     eni = { enabled = true }
     ipam = { mode = "eni" }
-    egressMasqueradeInterfaces = "eth0"
+    egressMasqueradeInterfaces = "ens+"
     routingMode                = "native"
     kubeProxyReplacement       = "true"
+    ipv4NativeRoutingCIDR      = "10.0.0.0/16"
     
     #k8sServiceHost = trimprefix(dependency.eks.outputs.cluster_endpoint, "https://")
     k8sServiceHost = try(trimprefix(dependency.eks.outputs.cluster_endpoint, "https://"), "pending")
