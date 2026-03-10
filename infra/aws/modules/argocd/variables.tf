@@ -91,3 +91,16 @@ variable "addons" {
   }))
   default = {}
 }
+
+variable "argocd_apps" {
+  description = "List of ArgoCD Application definitions"
+  type = list(object({
+    name            = string
+    repo_url        = string
+    target_revision = string
+    path            = string
+    namespace       = string
+    values_file     = optional(string, "values.yaml")
+  }))
+  default = []
+}
