@@ -11,25 +11,27 @@ resource "aws_eks_addon" "this" {
 
 }
 
-resource "kubectl_manifest" "argocd_app_of_apps" {
+resource "kubectl_manifest" "argocd_apps" {
+  for_each = { for app in var.argocd_apps : app.name => app }
+
   yaml_body = <<-YAML
     apiVersion: argoproj.io/v1alpha1
     kind: Application
     metadata:
-      name: linkding
+      name: ${each.value.name}
       namespace: argocd
     spec:
       project: default
       source:
-        repoURL: https://github.com/cz75ww/homelab-eks-apps-linkding.git
-        targetRevision: HEAD
-        path: .
+        repoURL: ${each.value.repo_url}
+        targetRevision: ${each.value.target_revision}
+        path: ${each.value.path}
         helm:
           valueFiles:
-            - envs/dev/values.yaml
+            - ${each.value.values_file}
       destination:
         server: https://kubernetes.default.svc
-        namespace: linkding-ns
+        namespace: ${each.value.namespace}
       syncPolicy:
         syncOptions:
           - CreateNamespace=true
