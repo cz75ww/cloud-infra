@@ -32,8 +32,19 @@ inputs = {
   chart_version = "7.7.11"
   namespace     = "argocd"
   
-  wait    = true
+  wait    = false
   timeout = 600
+
+ argocd_apps = [
+  {
+    name            = "linkding-app"
+    repo_url        = "https://github.com/cz75ww/homelab-eks-argocd-apps.git"
+    target_revision = "HEAD"
+    path            = "linkding"
+    values_file     = "envs/dev/values.yaml"
+    namespace       = "linkding-ns"
+  }
+]
   
   helm_values = {
     server = {
