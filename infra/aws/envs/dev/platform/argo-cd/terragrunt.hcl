@@ -24,6 +24,12 @@ dependencies {
   paths = ["../../group-nodes"]
 }
 
+locals {
+  karpenter   = read_terragrunt_config("karpenter.hcl")
+  apps        = read_terragrunt_config("apps.hcl")
+  helm_values = read_terragrunt_config("helm_values.hcl")
+}
+
 inputs = {
   eks_name      = dependency.eks.outputs.cluster_name
   release_name  = "argocd"
@@ -35,35 +41,8 @@ inputs = {
   wait    = false
   timeout = 600
 
- argocd_apps = [
-  {
-    name            = "linkding-app"
-    repo_url        = "https://github.com/cz75ww/homelab-eks-argocd-apps.git"
-    target_revision = "HEAD"
-    path            = "linkding"
-    values_file     = "envs/dev/values.yaml"
-    namespace       = "linkding-ns"
-  }
-]
-  
-  helm_values = {
-    server = {
-      service = {
-        type = "NodePort"
-      }
-      ingress = {
-        enabled = true
-        ingressClassName = "alb"
-        annotations = {
-          "alb.ingress.kubernetes.io/scheme"          = "internet-facing"
-          "alb.ingress.kubernetes.io/target-type"     = "ip"
-          "alb.ingress.kubernetes.io/listen-ports"    = "[{\"HTTPS\":443}]"
-          "alb.ingress.kubernetes.io/backend-protocol" = "HTTPS"
-          "alb.ingress.kubernetes.io/conditions.argogrpc" = "[{\"field\":\"http-header\",\"httpHeaderConfig\":{\"httpHeaderName\":\"Content-Type\",\"values\":[\"application/grpc\"]}}]"
-        }
-      }
-      extraArgs = ["--insecure"]
-    }
-  }
-}
+  karpenter_nodes = local.karpenter.locals.karpenter_nodes
+  argocd_apps     = local.apps.locals.argocd_apps
+  helm_values     = local.helm_values.locals.helm_values
 
+}
