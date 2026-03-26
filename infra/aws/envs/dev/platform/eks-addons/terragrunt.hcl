@@ -15,6 +15,10 @@ dependency "eks" {
   mock_outputs_allowed_terraform_commands = ["init", "validate", "plan", "destroy"]
 }
 
+locals {
+  addons      = read_terragrunt_config("addons.hcl")
+}
+
 dependency "cilium" {
   config_path = "../../cilium"
   
@@ -38,22 +42,6 @@ dependency "nodes" {
 inputs = {
   eks_name = dependency.eks.outputs.cluster_name
   release_name = "eks-addons-placeholder"
+  addons = local.addons.locals.addons
   
-  addons = {
-    coredns = {
-      addon_version = "v1.11.4-eksbuild.28"
-    }
-    eks-pod-identity-agent = {
-      addon_version = "v1.3.10-eksbuild.2"
-    }
-    aws-ebs-csi-driver = {
-      addon_version = "v1.56.0-eksbuild.1"
-    }
-    aws-secrets-store-csi-driver-provider = {
-      addon_version = "v2.1.1-eksbuild.1"
-    }
-    external-dns = {
-      addon_version = "v0.20.0-eksbuild.3"
-    }
-  }
 }

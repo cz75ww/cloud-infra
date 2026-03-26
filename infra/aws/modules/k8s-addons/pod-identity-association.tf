@@ -27,3 +27,13 @@ resource "aws_eks_pod_identity_association" "external_dns" {
   service_account = "external-dns"
   role_arn        = aws_iam_role.externaldns_role.arn
 }
+
+###############################################
+# ADOT Collector Pod Identity Association
+###############################################
+resource "aws_eks_pod_identity_association" "adot_collector" {
+  cluster_name    = var.eks_name
+  namespace       = "opentelemetry-operator-system"
+  service_account = "opentelemetry-operator"
+  role_arn        = aws_iam_role.adot_collector.arn
+}

@@ -88,6 +88,14 @@ variable "addons" {
   description = "Map of EKS addons to enable"
   type = map(object({
     addon_version = optional(string)
+    configuration_values = optional(string)
+    depends_on_addons    = optional(list(string), [])
   }))
   default = {}
+}
+
+variable "tags" {
+  description = "Tags to apply to resources"
+  type        = map(string)
+  default     = {}
 }

@@ -128,3 +128,15 @@ variable "karpenter_nodes" {
   }))
   default = []
 }
+
+variable "observability" {
+  type = list(object({
+    name            = string
+    repo_url        = string
+    target_revision = string
+    path            = string
+    values_file     = string
+    namespace       = string
+  }))
+  default = []
+}

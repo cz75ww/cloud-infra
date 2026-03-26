@@ -60,7 +60,7 @@ resource "aws_iam_role_policy" "secrets_store" {
         "secretsmanager:GetSecretValue",
         "secretsmanager:DescribeSecret"
       ]
-      Resource = "arn:aws:secretsmanager:*:*:secret:my-test-secret-*"
+      Resource = "arn:aws:secretsmanager:*:*:secret:*"
     }]
   })
 }
@@ -95,4 +95,15 @@ resource "aws_iam_role_policy" "external_dns" {
       }
     ]
   })
+}
+
+# Policy for reading adot collectorlogs
+resource "aws_iam_role" "adot_collector" {
+  name = "${var.eks_name}-adot-collector-role"
+  assume_role_policy = data.aws_iam_policy_document.adot_collector_assume.json
+}
+
+resource "aws_iam_role_policy_attachment" "adot_collector" {
+  policy_arn = aws_iam_policy.adot_collector.arn
+  role       = aws_iam_role.adot_collector.name
 }

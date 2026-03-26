@@ -11,38 +11,8 @@ resource "aws_eks_addon" "this" {
 
 }
 
-# resource "kubectl_manifest" "argocd_apps" {
-#   for_each = { for app in var.argocd_apps : app.name => app }
-
-#   yaml_body = <<-YAML
-#     apiVersion: argoproj.io/v1alpha1
-#     kind: Application
-#     metadata:
-#       name: ${each.value.name}
-#       namespace: argocd
-#     spec:
-#       project: default
-#       source:
-#         repoURL: ${each.value.repo_url}
-#         targetRevision: ${each.value.target_revision}
-#         path: ${each.value.path}
-#         helm:
-#           valueFiles:
-#             - ${each.value.values_file}
-#       destination:
-#         server: https://kubernetes.default.svc
-#         namespace: ${each.value.namespace}
-#       syncPolicy:
-#         syncOptions:
-#           - CreateNamespace=true
-#         automated:
-#           selfHeal: true
-#           prune: true
-#   YAML
-# }
-
 locals {
-  all_apps = concat(var.argocd_apps, var.karpenter_nodes)
+  all_apps = concat(var.argocd_apps, var.karpenter_nodes, var.observability)
 }
 
 resource "kubectl_manifest" "argocd_apps" {

@@ -25,24 +25,40 @@ dependencies {
 }
 
 locals {
-  karpenter   = read_terragrunt_config("karpenter.hcl")
-  apps        = read_terragrunt_config("apps.hcl")
+  apps          = read_terragrunt_config("apps.hcl")
+ 
+  argocd_apps = [for app in local.apps.locals.argocd_apps : merge(app, {
+    repo_url        = local.apps.locals.repo_url
+    target_revision = local.apps.locals.target_revision
+    values_file     = local.apps.locals.values_file
+  })]
+
+  karpenter_nodes = [for app in local.apps.locals.karpenter_nodes : merge(app, {
+    repo_url        = local.apps.locals.repo_url
+    target_revision = local.apps.locals.target_revision
+    values_file     = local.apps.locals.values_file
+  })]
+
+  grafana = [for app in local.apps.locals.grafana : merge(app, {
+    repo_url        = local.apps.locals.repo_url
+    target_revision = local.apps.locals.target_revision
+    values_file     = local.apps.locals.values_file
+  })]
+
   helm_values = read_terragrunt_config("helm_values.hcl")
 }
 
 inputs = {
-  eks_name      = dependency.eks.outputs.cluster_name
-  release_name  = "argocd"
-  repository    = "https://argoproj.github.io/argo-helm"
-  chart         = "argo-cd"
-  chart_version = "7.7.11"
-  namespace     = "argocd"
-  
-  wait    = false
-  timeout = 600
-
-  karpenter_nodes = local.karpenter.locals.karpenter_nodes
-  argocd_apps     = local.apps.locals.argocd_apps
+  eks_name        = dependency.eks.outputs.cluster_name
+  release_name    = "argocd"
+  repository      = "https://argoproj.github.io/argo-helm"
+  chart           = "argo-cd"
+  chart_version   = "7.7.11"
+  namespace       = "argocd"
+  wait            = false
+  timeout         = 600
+  argocd_apps     = local.argocd_apps
+  karpenter_nodes = local.karpenter_nodes
+  grafana         = local.grafana
   helm_values     = local.helm_values.locals.helm_values
-
 }

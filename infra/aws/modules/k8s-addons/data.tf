@@ -17,3 +17,17 @@ data "aws_iam_policy_document" "assume_role" {
     }
   }
 }
+
+data "aws_iam_policy_document" "adot_collector_assume" {
+  statement {
+    sid     = "PodIdentity"
+    actions = ["sts:AssumeRole", "sts:TagSession"]
+    principals {
+      type        = "Service"
+      identifiers = ["pods.eks.amazonaws.com"]
+    }
+  }
+}
+data "aws_caller_identity" "current" {}
+
+data "aws_region" "current" {}
