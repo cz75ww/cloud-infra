@@ -14,7 +14,7 @@ dependency "eks" {
     cluster_name     = "mock-cluster"
     cluster_endpoint = "https://mock.example.com"
   }
-  mock_outputs_allowed_terraform_commands = ["init", "validate", "plan"]
+  mock_outputs_allowed_terraform_commands = ["init", "validate", "plan", "destroy"]
 }
 
 inputs = {
