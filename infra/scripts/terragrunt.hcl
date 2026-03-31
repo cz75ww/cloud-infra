@@ -1,9 +1,11 @@
 locals {
   account_vars = read_terragrunt_config(find_in_parent_folders("account.hcl"))
   region_vars  = read_terragrunt_config(find_in_parent_folders("region.hcl"))
+  env_vars     = read_terragrunt_config(find_in_parent_folders("env.hcl"))
+    
+  base_module_url = "/app/infra/aws/modules"
+  base_env_url    = "/app/infra/aws/envs/${local.env}"
   
-  account_id = local.account_vars.locals.account_id
-  aws_region = local.region_vars.locals.aws_region
 }
 
 # Configure Terragrunt to use remote state

@@ -26,4 +26,5 @@ locals {
       namespace = "grafana-ns"
     }
   ]
+  
 }

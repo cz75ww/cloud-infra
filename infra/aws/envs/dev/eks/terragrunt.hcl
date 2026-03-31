@@ -1,23 +1,15 @@
-terraform {
-  source = "../../../modules/eks"
-}
-
 include "root" {
-  path = find_in_parent_folders()
+  # Explicit path to our sibling config folder
+  path   = "../root.hcl"
+  expose = true
 }
 
-include "env" {
-  path           = find_in_parent_folders("env.hcl")
-  expose         = true
-  merge_strategy = "no_merge"
-}
-
-locals {
-  env_vars = read_terragrunt_config(find_in_parent_folders("env.hcl"))
+terraform {
+  source = "${include.root.locals.base_module_url}//eks"
 }
 
 dependency "vpc" {
-  config_path = "../vpc"
+  config_path = "${include.root.locals.base_env_url}/vpc"
   
   mock_outputs = {
     private_subnet_ids = ["subnet-1234", "subnet-5678"]
@@ -25,13 +17,16 @@ dependency "vpc" {
 }
 
 dependencies {
-  paths = ["../vpc-endpoints"]
+  paths = ["${include.root.locals.base_env_url}/vpc-endpoints"]
 }
 
 inputs = {
-  eks_version = local.env_vars.locals.eks_version
-  env         = include.env.locals.env
-  eks_name    = "demo"
+  # Pull these from your env.hcl and root.hcl
+  eks_version = include.root.locals.env_vars.locals.eks_version
+  env         = include.root.locals.env
+  
+  # Dynamic naming based on environment
+  eks_name    = "eks-${include.root.locals.env}-demo"
   subnet_ids  = dependency.vpc.outputs.private_subnet_ids
   
   node_groups = {}

@@ -1,6 +1,7 @@
 locals {
   
   helm_values = {
+    # Input values for ingress configuration
     server = {
       service = {
         type = "NodePort"

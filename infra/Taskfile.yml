@@ -3,16 +3,16 @@ version: "3"
 vars:
   ENV: '{{.ENV | default "dev"}}'
   BASE: "aws/envs/{{.ENV}}"
-  COMPONENTS: "vpc vpc-endpoints eks cilium group-nodes platform/eks-addons platform/alb-controller platform/argo-cd karpenter"
-
+  COMPONENTS: "vpc vpc-endpoints eks cilium group-nodes platform/eks-addons platform/alb-controller platform/argo-cd platform/karpenter platform/kyverno"
+  COMPONENTS_REV: "platform/kyverno platform/karpenter platform/argo-cd platform/alb-controller platform/eks-addons group-nodes cilium eks vpc-endpoints vpc"
 tasks:
   default:
     silent: true
     cmds:
       - task --list
       - echo ""
-      - echo "Order vpc > vpc-endpoints > eks > cilium > group-nodes > platform/eks-addons > platform/alb-controller > platform/argo-cd > karpenter"
-
+      - echo "Apply Order vpc > vpc-endpoints > eks > cilium > group-nodes > platform/eks-addons > platform/alb-controller > platform/argo-cd > karpenter > platform/kyverno"
+      - echo "Destroy Order platform/kyverno > platform/karpenter > platform/argo-cd > platform/alb-controller > platform/eks-addons > group-nodes > cilium > eks > vpc-endpoints > vpc"
   up:
     desc: "Deploy Full Stack"
     cmds:
@@ -30,8 +30,6 @@ tasks:
   down:
     desc: "Destroy Everything (Reverse Order)"
     prompt: "Destroy {{.ENV}}?"
-    vars:
-      COMPONENTS_REV: "karpenter platform/argo-cd platform/alb-controller platform/eks-addons group-nodes cilium eks vpc-endpoints vpc"
     cmds:
       - echo "Starting destruction..."
       - echo ""
@@ -53,7 +51,7 @@ tasks:
   deploy-component:
     internal: true
     cmds:
-      - echo "[{{.INDEX}}/8] Deploying {{.COMPONENT}}..."
+      - echo "[{{.INDEX}}/9] Deploying {{.COMPONENT}}..."
       - task: apply
         vars: { COMPONENT: "{{.COMPONENT}}" }
       - echo "{{.COMPONENT}} deployed"
@@ -63,7 +61,7 @@ tasks:
   destroy-component:
     internal: true
     cmds:
-      - echo "[{{.INDEX}}/8] Destroying {{.COMPONENT}}..."
+      - echo "[{{.INDEX}}/9] Destroying {{.COMPONENT}}..."
       - task: destroy
         vars: { COMPONENT: "{{.COMPONENT}}" }
       - echo "{{.COMPONENT}} destroyed"
@@ -73,6 +71,7 @@ tasks:
     desc: "Apply component (task apply COMPONENT=vpc)"
     dir: "{{.BASE}}/{{.COMPONENT}}"
     cmds:
+      - terragrunt init
       - terragrunt validate
       - terragrunt plan -out=tfplan
       - terragrunt apply tfplan
@@ -81,6 +80,7 @@ tasks:
     desc: "Destroy component"
     dir: "{{.BASE}}/{{.COMPONENT}}"
     cmds:
+      - terragrunt init
       - terragrunt destroy -auto-approve
 
   kubeconfig:

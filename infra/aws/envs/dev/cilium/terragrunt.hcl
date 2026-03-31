@@ -1,24 +1,20 @@
 include "root" {
-  path = find_in_parent_folders()
-}
-
-include "kubernetes_addons" {
-  path = "../../../_common/k8s-addons.hcl"
+  path   = "../root.hcl"
+  expose = true 
 }
 
 terraform {
-  source = "../../../modules/cilium"
+  source = "${include.root.locals.base_module_url}//cilium"
 }
 
 dependency "eks" {
-  config_path = "../eks"
+  config_path = "${include.root.locals.base_env_url}//eks"
   
-  # Workarond - Mock values used during init/plan before EKS exists
   mock_outputs = {
-    cluster_name     = "mock-cluster"  # Fake cluster name
-    cluster_endpoint = "https://mock.example.com"  # Fake API endpoint
+    cluster_name     = "mock-cluster"
+    cluster_endpoint = "https://mock.example.com"
   }
-  mock_outputs_allowed_terraform_commands = ["init", "validate", "plan", "destroy"]
+  mock_outputs_allowed_terraform_commands = ["init", "validate", "plan"]
 }
 
 inputs = {
@@ -31,21 +27,18 @@ inputs = {
   
   wait          = false
   timeout       = 600 
-  
   wait_for_jobs = false
 
-   
   helm_values = {
-    eni = { enabled = true }
-    ipam = { mode = "eni" }
+    eni                        = { enabled = true }
+    ipam                       = { mode = "eni" }
     egressMasqueradeInterfaces = "ens+"
     routingMode                = "native"
     kubeProxyReplacement       = "true"
     ipv4NativeRoutingCIDR      = "10.0.0.0/16"
     
-    #k8sServiceHost = trimprefix(dependency.eks.outputs.cluster_endpoint, "https://")
+    # Safe handling of the endpoint for initial validation
     k8sServiceHost = try(trimprefix(dependency.eks.outputs.cluster_endpoint, "https://"), "pending")
-    
     k8sServicePort = 443
     
     hubble = {
@@ -57,4 +50,8 @@ inputs = {
       replicas = 1
     }
   }
+
+  # Adding these for consistency with your other modules
+  aws_region = include.root.locals.aws_region
+  env        = include.root.locals.env
 }

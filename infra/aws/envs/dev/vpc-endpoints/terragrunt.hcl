@@ -1,23 +1,15 @@
-terraform {
-  source = "../../../modules/vpc-endpoints/"
-}
-
 include "root" {
-  path = find_in_parent_folders()
-}
-
-include "env" {
-  path   = find_in_parent_folders("env.hcl")
+  path   = "../root.hcl"
   expose = true
 }
 
-include "region" {
-  path   = find_in_parent_folders("region.hcl")
-  expose = true
+terraform {
+  source = "${include.root.locals.base_module_url}//vpc-endpoints"
 }
 
 dependency "vpc" {
-  config_path = "../vpc"
+  config_path = "${include.root.locals.base_env_url}/vpc"
+  
   mock_outputs = {
     vpc_id                  = "vpc-123456"
     vpc_cidr                = "10.0.0.0/16"
@@ -28,8 +20,9 @@ dependency "vpc" {
 }
 
 inputs = {
-  env                     = include.env.locals.env
-  region                  = include.region.locals.aws_region
+  env    = include.root.locals.env
+  region = include.root.locals.aws_region
+  
   vpc_id                  = dependency.vpc.outputs.vpc_id
   vpc_cidr                = dependency.vpc.outputs.vpc_cidr
   private_subnet_ids      = dependency.vpc.outputs.private_subnet_ids
