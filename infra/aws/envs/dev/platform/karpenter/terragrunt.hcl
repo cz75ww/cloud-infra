@@ -47,7 +47,7 @@ inputs = {
   # Karpenter specific settings
   karpenter_namespace = "karpenter"
   karpenter_version   = "1.8.6"
-  karpenter_replicas  = 1
+  karpenter_replicas  = 2
   install_helm_chart  = true
   helm_timeout        = 600
   

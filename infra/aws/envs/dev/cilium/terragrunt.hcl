@@ -3,6 +3,10 @@ include "root" {
   expose = true 
 }
 
+include "kubernetes_addons" {
+  path = "../_config/providers.hcl"
+}
+
 terraform {
   source = "${include.root.locals.base_module_url}//cilium"
 }
