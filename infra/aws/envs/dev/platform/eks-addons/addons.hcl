@@ -22,6 +22,7 @@ locals {
     kube-state-metrics = {
       addon_version = "v2.18.0-eksbuild.1"
     }
+    # Cert-manager is required for opentelemetry-operator, which is a dependency for ADOT. We need to install it first before ADOT.
     cert-manager = {
     addon_version = "v1.19.2-eksbuild.1"
     }
