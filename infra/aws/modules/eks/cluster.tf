@@ -23,7 +23,7 @@ resource "aws_iam_role_policy_attachment" "eks" {
 }
 
 resource "aws_eks_cluster" "this" {
-  name     = "${var.env}-${var.eks_name}"
+  name     = var.eks_name
   version  = var.eks_version
   role_arn = aws_iam_role.eks.arn
   bootstrap_self_managed_addons = false
