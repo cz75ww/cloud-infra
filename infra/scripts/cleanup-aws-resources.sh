@@ -1,12 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-KYVERNO_MWH=$(kubectl get mutatingwebhookconfigurations -l app.kubernetes.io/instance=kyverno --no-headers 2>/dev/null | awk '{print $1}' || echo "")
-KYVERNO_VWH=$(kubectl get validatingwebhookconfigurations -l app.kubernetes.io/instance=kyverno --no-headers 2>/dev/null | awk '{print $1}' || echo "")
-
 CLUSTER_NAME=${1:-$(aws eks list-clusters --query 'clusters[0]' --output text)}
 echo "==> Cluster: $CLUSTER_NAME"
-
+  
 # Check if EKS cluster exists and is reachable
 if [ -z "$CLUSTER_NAME" ] || [ "$CLUSTER_NAME" == "None" ]; then
   echo "==> No EKS cluster found, skipping cleanup..."
@@ -127,15 +124,19 @@ if [ -n "$VPC_ID" ]; then
   done
 fi
 
-# Remove Kyverno webhooks to avoid deletion timeouts
-if [ -n "$KYVERNO_MWH" ] || [ -n "$KYVERNO_VWH" ]; then
-  echo "==> Removing Kyverno the jobs and webhooks to avoid deletion timeouts..."
-  kubectl delete jobs -n kyverno --all --ignore-not-found
-  kubectl delete mutatingwebhookconfigurations -l app.kubernetes.io/instance=kyverno --ignore-not-found=true || true
-  kubectl delete validatingwebhookconfigurations -l app.kubernetes.io/instance=kyverno --ignore-not-found=true || true
-else
-  echo "==> No Kyverno webhooks found, skipping..."
-fi
+# Steps to avoid the Terraform destroy process getting stuck
+# 1. Delete the stuck job/pod first to unblock
+kubectl delete jobs --all -n kyverno --force --grace-period=0
+kubectl delete pods --all -n kyverno --force --grace-period=0
 
+# 2. Uninstall Helm release skipping hooks
+helm uninstall kyverno -n kyverno --no-hooks
+
+# 3. Clean up any remaining webhooks that could block future installs
+kubectl delete validatingwebhookconfigurations -l app.kubernetes.io/instance=kyverno
+kubectl delete mutatingwebhookconfigurations -l app.kubernetes.io/instance=kyverno
+
+# 4. Delete the namespace if needed
+kubectl delete namespace kyverno
 echo ""
 echo "==> Cleanup done!"
